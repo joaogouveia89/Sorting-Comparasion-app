@@ -19,13 +19,23 @@ data class ColumnSorting(
     val height: Dp
 )
 
+enum class OperationState{
+    IDLE, SORTING, INTERRUPTED, FINISHED
+}
 data class SortingState(
     val columns: List<ColumnSorting> = listOf(),
     val timerSec: Int = 0,
     val timerMs: Int = 0,
-    val isRunning: Boolean = false,
-    val isSorted: Boolean = false
-)
+    val operationState: OperationState = OperationState.IDLE
+){
+    val operationButtonLabel: String
+        get() = when(operationState){
+            OperationState.IDLE ->"Start"
+            OperationState.SORTING -> "Interrupt"
+            OperationState.INTERRUPTED -> "Reshuffle"
+            OperationState.FINISHED -> "Resort"
+        }
+}
 
 class MainViewModel: ViewModel() {
 
@@ -51,18 +61,26 @@ class MainViewModel: ViewModel() {
     }
 
     fun startStopSorting() {
-        if(_uiState.value.isRunning){
-            cancelTimer()
-        }else{
-            startTimer()
-            viewModelScope.launch(Dispatchers.IO) {
-                bubbleSort()
+        when(uiState.value.operationState){
+            OperationState.SORTING -> {
+                cancelTimer()
+                _uiState.update { it.copy(operationState = OperationState.INTERRUPTED) }
+            }
+
+            OperationState.IDLE -> {
+                startTimer()
+                viewModelScope.launch(Dispatchers.IO) {
+                    bubbleSort()
+                }
+            }
+            else -> {
+                shuffleList()
+                startTimer()
+                viewModelScope.launch(Dispatchers.IO) {
+                    bubbleSort()
+                }
             }
         }
-    }
-
-    fun restartSorting(){
-        shuffleList()
     }
 
     private fun shuffleList(list: List<ColumnSorting> = uiState.value.columns){
@@ -78,8 +96,10 @@ class MainViewModel: ViewModel() {
         val n = arr.size
 
         for (i in 0 until n - 1) {
+            if(uiState.value.operationState == OperationState.INTERRUPTED) break
             for (j in 0 until n - i - 1) {
                 if (arr[j].n > arr[j + 1].n) {
+                    if(uiState.value.operationState == OperationState.INTERRUPTED) break
                     // Swap the elements
                     val temp = arr[j]
                     arr[j] = arr[j + 1]
@@ -89,13 +109,14 @@ class MainViewModel: ViewModel() {
             }
         }
         timerJob?.cancel()
-        _uiState.update { it.copy(isRunning = false) }
-        _uiState.update { it.copy(isSorted = true) }
+        if(uiState.value.operationState != OperationState.INTERRUPTED){
+            _uiState.update { it.copy(operationState = OperationState.FINISHED) }
+        }
     }
 
     private fun startTimer() {
         timerJob?.cancel()
-        _uiState.update { it.copy(isRunning = true, isSorted = false) }
+        _uiState.update { it.copy(operationState = OperationState.SORTING) }
 
         timerJob = viewModelScope.launch(Dispatchers.IO) {
             var timeSec = 0
@@ -116,14 +137,14 @@ class MainViewModel: ViewModel() {
     }
 
     private fun cancelTimer() {
-        _uiState.update { it.copy(isRunning = false) }
+        _uiState.update { it.copy(operationState = OperationState.INTERRUPTED) }
         timerJob?.cancel()
         timerJob = null
     }
 
     override fun onCleared() {
         super.onCleared()
-        _uiState.update { it.copy(isRunning = false) }
+        _uiState.update { it.copy(operationState = OperationState.INTERRUPTED) }
         timerJob?.cancel()
     }
 }

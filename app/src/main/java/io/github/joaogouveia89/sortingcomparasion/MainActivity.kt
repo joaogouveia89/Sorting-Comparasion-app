@@ -64,7 +64,7 @@ class MainActivity : ComponentActivity() {
                     }
 
 
-                    ScreenContent(innerPadding, boxesWidth, viewModel::startStopSorting, viewModel::restartSorting, uiState)
+                    ScreenContent(innerPadding, boxesWidth, viewModel::startStopSorting, uiState)
                 }
             }
         }
@@ -76,7 +76,6 @@ fun ScreenContent(
     innerPadding: PaddingValues,
     boxesWidth: Dp,
     startStopSorting: () -> Unit,
-    restartSorting: () -> Unit,
     uiState: SortingState
 ) {
     Column(
@@ -101,20 +100,11 @@ fun ScreenContent(
                 Button(
                     modifier = Modifier.padding(top = 12.dp),
                     colors = ButtonDefaults.buttonColors().copy(
-                        containerColor = if(uiState.isRunning) Color.Red else ButtonDefaults.buttonColors().containerColor
+                        containerColor = if(uiState.operationState == OperationState.SORTING) Color.Red else ButtonDefaults.buttonColors().containerColor
                     ),
                     onClick = startStopSorting
                 ) {
-                    Text(text = if(uiState.isRunning) "Stop" else "Start" )
-                }
-
-                if(uiState.isSorted){
-                    Button(
-                        modifier = Modifier.padding(top = 12.dp),
-                        onClick = restartSorting
-                    ) {
-                        Text(text = "Reshuffle")
-                    }
+                    Text(text = uiState.operationButtonLabel )
                 }
                 Row(
                     modifier = Modifier.padding(top = 12.dp)
@@ -193,8 +183,7 @@ fun ScreenContentPreview() {
         ScreenContent(
             boxesWidth = boxesWidth, uiState = SortingState(),
             innerPadding = PaddingValues(),
-            startStopSorting = {},
-            restartSorting = {},
+            startStopSorting = {}
         )
     }
 }
