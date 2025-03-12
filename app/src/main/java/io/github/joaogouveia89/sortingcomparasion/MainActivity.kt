@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,8 +20,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,6 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.tooling.preview.Preview
@@ -64,7 +68,13 @@ class MainActivity : ComponentActivity() {
                     }
 
 
-                    ScreenContent(innerPadding, boxesWidth, viewModel::startStopSorting, uiState)
+                    ScreenContent(
+                        innerPadding = innerPadding,
+                        boxesWidth = boxesWidth,
+                        startStopSorting = viewModel::startStopSorting,
+                        uiState = uiState,
+                        onSortingAlgorithmChange = viewModel::changeSortAlgorithm
+                    )
                 }
             }
         }
@@ -76,6 +86,7 @@ fun ScreenContent(
     innerPadding: PaddingValues,
     boxesWidth: Dp,
     startStopSorting: () -> Unit,
+    onSortingAlgorithmChange: (SortingAlgorithm) -> Unit,
     uiState: SortingState
 ) {
     Column(
@@ -95,8 +106,34 @@ fun ScreenContent(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Algorithm: Bubble Sorting"
+                    text = "Algorithm"
                 )
+                Row(modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    AlgorithmBadge(
+                        text = "Bubble Sort",
+                        isSelected = uiState.algorithm == SortingAlgorithm.BUBBLE_SORT,
+                        onClick = { onSortingAlgorithmChange(SortingAlgorithm.BUBBLE_SORT)}
+                    )
+                    AlgorithmBadge(
+                        text = "Quick Sort",
+                        isSelected = uiState.algorithm == SortingAlgorithm.QUICK_SORT,
+                        onClick = {onSortingAlgorithmChange(SortingAlgorithm.QUICK_SORT)}
+                    )
+                    AlgorithmBadge(
+                        text = "Merge Sort",
+                        isSelected = uiState.algorithm == SortingAlgorithm.MERGE_SORT,
+                        onClick = {onSortingAlgorithmChange(SortingAlgorithm.MERGE_SORT)}
+                    )
+                    AlgorithmBadge(
+                        text = "Selection Sort",
+                        isSelected = uiState.algorithm == SortingAlgorithm.SELECTION_SORT,
+                        onClick = {onSortingAlgorithmChange(SortingAlgorithm.SELECTION_SORT)}
+                    )
+                }
                 Button(
                     modifier = Modifier.padding(top = 12.dp),
                     colors = ButtonDefaults.buttonColors().copy(
@@ -169,6 +206,32 @@ fun Chart(
     }
 }
 
+@Composable
+fun AlgorithmBadge(
+    text: String,
+    isSelected: Boolean = false,
+    onClick: () -> Unit
+) {
+    Box(modifier = Modifier
+        .clickable{ onClick() }
+        .clip(RoundedCornerShape(8.dp))
+        .background(
+            if(isSelected){
+                ButtonDefaults.buttonColors().containerColor
+            }else{
+                ButtonDefaults.buttonColors().disabledContainerColor
+            }
+        )
+        .padding(4.dp)
+    ) {
+        Text(
+            text = text,
+            fontSize = 12.sp,
+            color = if(isSelected) Color.White else Color.Black
+        )
+    }
+}
+
 
 @Preview(showBackground = true)
 @Composable
@@ -183,7 +246,8 @@ fun ScreenContentPreview() {
         ScreenContent(
             boxesWidth = boxesWidth, uiState = SortingState(),
             innerPadding = PaddingValues(),
-            startStopSorting = {}
+            startStopSorting = {},
+            onSortingAlgorithmChange = {},
         )
     }
 }

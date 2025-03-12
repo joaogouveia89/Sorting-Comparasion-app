@@ -26,7 +26,8 @@ data class SortingState(
     val columns: List<ColumnSorting> = listOf(),
     val timerSec: Int = 0,
     val timerMs: Int = 0,
-    val operationState: OperationState = OperationState.IDLE
+    val operationState: OperationState = OperationState.IDLE,
+    val algorithm: SortingAlgorithm = SortingAlgorithm.BUBBLE_SORT
 ){
     val operationButtonLabel: String
         get() = when(operationState){
@@ -83,6 +84,12 @@ class MainViewModel: ViewModel() {
         }
     }
 
+    fun changeSortAlgorithm(algorithm: SortingAlgorithm){
+        if(uiState.value.operationState != OperationState.SORTING){
+            _uiState.update { it.copy(algorithm = algorithm) }
+        }
+    }
+
     private fun shuffleList(list: List<ColumnSorting> = uiState.value.columns){
         _uiState.update {
             it.copy(
@@ -91,7 +98,7 @@ class MainViewModel: ViewModel() {
         }
     }
 
-    private suspend fun bubbleSort() {
+    private fun bubbleSort() {
         val arr = uiState.value.columns.toMutableList()
         val n = arr.size
 
