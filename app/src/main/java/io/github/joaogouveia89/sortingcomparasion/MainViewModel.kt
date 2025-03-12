@@ -4,9 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -110,6 +112,12 @@ class MainViewModel: ViewModel() {
     }
 
     private fun startSorting(){
+        if(_uiState.value.operationState == OperationState.FINISHED){
+                _uiState.update { it.copy(
+                    columns = shuffleList()
+                )
+            }
+        }
         _uiState.update {
             it.copy(
                 operationState = OperationState.SORTING
@@ -184,11 +192,66 @@ class MainViewModel: ViewModel() {
         }
     }
     private fun mergeSort(){
+        val arr = uiState.value.columns.toMutableList()
+        viewModelScope.launch(Dispatchers.IO) {
+            val sorted = mergeSortIterative(arr)
 
+            _uiState.update { it.copy(columns = sorted) }
+
+            timerJob?.cancel()
+            if(uiState.value.operationState != OperationState.INTERRUPTED){
+                _uiState.update { it.copy(operationState = OperationState.FINISHED) }
+            }
+        }
     }
+
+    private suspend fun mergeSortIterative(arr: List<ColumnSorting>): List<ColumnSorting> {
+        if (arr.size <= 1) return arr
+
+        var current = arr.map { listOf(it) }
+
+        while (current.size > 1) {
+            val next = mutableListOf<Deferred<List<ColumnSorting>>>()
+
+            for (i in current.indices step 2) {
+                next.add(viewModelScope.async(Dispatchers.IO) {
+                    if (i + 1 < current.size)
+                        merge(current[i], current[i + 1])
+                    else
+                        current[i]
+                })
+            }
+
+            current = next.awaitAll()
+            _uiState.update { it.copy(columns = current.flatten()) }
+        }
+
+        return current.first()
+    }
+
+    private fun merge(left: List<ColumnSorting>, right: List<ColumnSorting>): List<ColumnSorting> {
+        var i = 0
+        var j = 0
+        val merged = mutableListOf<ColumnSorting>()
+
+        while (i < left.size && j < right.size) {
+            if (left[i].n <= right[j].n) {
+                merged.add(left[i++])
+            } else {
+                merged.add(right[j++])
+            }
+        }
+
+        while (i < left.size) merged.add(left[i++])
+        while (j < right.size) merged.add(right[j++])
+
+        return merged
+    }
+
     private fun selectionSort(){
 
     }
+
 
     private fun startTimer() {
         timerJob?.cancel()
