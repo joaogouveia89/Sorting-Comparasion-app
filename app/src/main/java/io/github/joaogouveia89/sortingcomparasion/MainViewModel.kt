@@ -31,6 +31,7 @@ data class SortingState(
     val timerMs: Int = 0,
     val operationState: OperationState = OperationState.IDLE,
     val algorithm: SortingAlgorithm = SortingAlgorithm.BUBBLE_SORT,
+    val runningTimes: MutableMap<SortingAlgorithm, String> = mutableMapOf(),
     val isLoadingList: Boolean = true
 ){
     val operationButtonLabel: String
@@ -89,6 +90,7 @@ class MainViewModel: ViewModel() {
             }
             else -> {
                 viewModelScope.launch(Dispatchers.IO) {
+                    uiState.value.runningTimes[uiState.value.algorithm] = "${uiState.value.timerSec}:${uiState.value.timerMs}"
                     startTimer()
                     startSorting()
                 }
@@ -153,7 +155,12 @@ class MainViewModel: ViewModel() {
         }
         timerJob?.cancel()
         if(uiState.value.operationState != OperationState.INTERRUPTED){
-            _uiState.update { it.copy(operationState = OperationState.FINISHED) }
+            _uiState.update {
+                if(!it.runningTimes.containsKey(SortingAlgorithm.BUBBLE_SORT)){
+                    it.runningTimes[SortingAlgorithm.BUBBLE_SORT] = "${it.timerSec}:${it.timerMs}"
+                }
+                it.copy(operationState = OperationState.FINISHED)
+            }
         }
     }
 
@@ -189,7 +196,14 @@ class MainViewModel: ViewModel() {
 
         timerJob?.cancel()
         if(uiState.value.operationState != OperationState.INTERRUPTED){
-            _uiState.update { it.copy(operationState = OperationState.FINISHED) }
+            _uiState.update {
+                if(!it.runningTimes.containsKey(SortingAlgorithm.QUICK_SORT)){
+                    it.runningTimes[SortingAlgorithm.QUICK_SORT] = "${it.timerSec}:${it.timerMs}"
+                }
+                it.copy(
+                    operationState = OperationState.FINISHED,
+                )
+            }
         }
     }
     private fun mergeSort(){
@@ -201,7 +215,12 @@ class MainViewModel: ViewModel() {
 
             timerJob?.cancel()
             if(uiState.value.operationState != OperationState.INTERRUPTED){
-                _uiState.update { it.copy(operationState = OperationState.FINISHED) }
+                _uiState.update {
+                    if(!it.runningTimes.containsKey(SortingAlgorithm.MERGE_SORT)){
+                        it.runningTimes[SortingAlgorithm.MERGE_SORT] = "${it.timerSec}:${it.timerMs}"
+                    }
+                    it.copy(operationState = OperationState.FINISHED)
+                }
             }
         }
     }

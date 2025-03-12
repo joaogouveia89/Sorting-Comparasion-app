@@ -52,6 +52,7 @@ import java.util.Locale
 import kotlin.math.pow
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -66,7 +67,6 @@ class MainActivity : ComponentActivity() {
         setContent {
             SortingComparasionTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-
 
                     val configuration = LocalConfiguration.current
 
@@ -123,7 +123,7 @@ fun ScreenContent(
             ) {
                 Row(modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .padding(horizontal = 12.dp, vertical = 4.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     AlgorithmBadge(
@@ -143,7 +143,7 @@ fun ScreenContent(
                     )
                 }
                 Button(
-                    modifier = Modifier.padding(top = 12.dp),
+                    modifier = Modifier.padding(top = 8.dp),
                     colors = ButtonDefaults.buttonColors().copy(
                         containerColor = if(uiState.operationState == OperationState.SORTING) Color.Red else ButtonDefaults.buttonColors().containerColor
                     ),
@@ -152,7 +152,7 @@ fun ScreenContent(
                     Text(text = uiState.operationButtonLabel )
                 }
                 Row(
-                    modifier = Modifier.padding(top = 12.dp)
+                    modifier = Modifier.padding(top = 8.dp)
                 ) {
                     val timeSize = 40.sp
                     Text(
@@ -167,6 +167,20 @@ fun ScreenContent(
                         text = "%02d".format(uiState.timerMs),
                         fontSize = timeSize
                     )
+                }
+
+                uiState.runningTimes[uiState.algorithm]?.let {
+                    Row(
+                        modifier = Modifier.padding(top = 2.dp)
+                    ) {
+                        Text(
+                            modifier = Modifier
+                                .padding(start = 4.dp)
+                                .align(Alignment.Bottom),
+                            fontSize = 12.sp,
+                            text = "Last time was: $it"
+                        )
+                    }
                 }
 
                 Row {
