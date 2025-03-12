@@ -71,14 +71,14 @@ class MainViewModel: ViewModel() {
             OperationState.IDLE -> {
                 startTimer()
                 viewModelScope.launch(Dispatchers.IO) {
-                    bubbleSort()
+                    startSorting()
                 }
             }
             else -> {
                 shuffleList()
                 startTimer()
                 viewModelScope.launch(Dispatchers.IO) {
-                    bubbleSort()
+                    startSorting()
                 }
             }
         }
@@ -95,6 +95,15 @@ class MainViewModel: ViewModel() {
             it.copy(
                 columns = list.shuffled()
             )
+        }
+    }
+
+    private fun startSorting(){
+        when(uiState.value.algorithm){
+            SortingAlgorithm.BUBBLE_SORT -> bubbleSort()
+            SortingAlgorithm.QUICK_SORT -> quickSort()
+            SortingAlgorithm.MERGE_SORT -> mergeSort()
+            SortingAlgorithm.SELECTION_SORT -> selectionSort()
         }
     }
 
@@ -119,6 +128,48 @@ class MainViewModel: ViewModel() {
         if(uiState.value.operationState != OperationState.INTERRUPTED){
             _uiState.update { it.copy(operationState = OperationState.FINISHED) }
         }
+    }
+
+    private fun quickSort(left: Int = 0, right: Int = uiState.value.columns.size - 1){
+        val arr = uiState.value.columns.toMutableList()
+        var start = left
+        var end = right
+        val pivot = arr[(left + right) / 2].n
+
+        while (start <= end) {
+            while (arr[start].n < pivot) {
+                start++
+            }
+            while (arr[end].n > pivot) {
+                end--
+            }
+            if (start <= end) {
+                val temp = arr[start]
+                arr[start] = arr[end]
+                arr[end] = temp
+                start++
+                end--
+                _uiState.update { it.copy(columns = arr.toList()) }
+            }
+        }
+
+        if (left < end) {
+            quickSort(left, end)
+        }
+        if (start < right) {
+            quickSort(start, right)
+        }
+
+        timerJob?.cancel()
+        if(uiState.value.operationState != OperationState.INTERRUPTED){
+            _uiState.update { it.copy(operationState = OperationState.FINISHED) }
+        }
+    }
+    private fun mergeSort(){
+
+    }
+    private fun selectionSort(){
+
     }
 
     private fun startTimer() {
