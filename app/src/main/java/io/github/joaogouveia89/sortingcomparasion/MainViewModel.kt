@@ -128,7 +128,6 @@ class MainViewModel: ViewModel() {
                 SortingAlgorithm.BUBBLE_SORT -> bubbleSort()
                 SortingAlgorithm.QUICK_SORT -> quickSort()
                 SortingAlgorithm.MERGE_SORT -> mergeSort()
-                SortingAlgorithm.SELECTION_SORT -> selectionSort()
             }
         }
     }
@@ -247,11 +246,6 @@ class MainViewModel: ViewModel() {
 
         return merged
     }
-
-    private fun selectionSort(){
-
-    }
-
 
     private fun startTimer() {
         timerJob?.cancel()

@@ -141,11 +141,6 @@ fun ScreenContent(
                         isSelected = uiState.algorithm == SortingAlgorithm.MERGE_SORT,
                         onClick = {onSortingAlgorithmChange(SortingAlgorithm.MERGE_SORT)}
                     )
-                    AlgorithmBadge(
-                        text = "Selection Sort",
-                        isSelected = uiState.algorithm == SortingAlgorithm.SELECTION_SORT,
-                        onClick = {onSortingAlgorithmChange(SortingAlgorithm.SELECTION_SORT)}
-                    )
                 }
                 Button(
                     modifier = Modifier.padding(top = 12.dp),
