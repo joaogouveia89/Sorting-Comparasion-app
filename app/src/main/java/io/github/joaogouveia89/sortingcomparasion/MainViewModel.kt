@@ -23,7 +23,8 @@ data class SortingState(
     val columns: List<ColumnSorting> = listOf(),
     val timerSec: Int = 0,
     val timerMs: Int = 0,
-    val isRunning: Boolean = false
+    val isRunning: Boolean = false,
+    val isSorted: Boolean = false
 )
 
 class MainViewModel: ViewModel() {
@@ -44,13 +45,9 @@ class MainViewModel: ViewModel() {
                 idx,
                 h
             )
-        }.shuffled()
-
-        _uiState.update {
-            it.copy(
-                columns = columns
-            )
         }
+
+        shuffleList(columns)
     }
 
     fun startStopSorting() {
@@ -58,20 +55,57 @@ class MainViewModel: ViewModel() {
             cancelTimer()
         }else{
             startTimer()
+            viewModelScope.launch(Dispatchers.IO) {
+                bubbleSort()
+            }
         }
     }
 
-    fun startTimer() {
+    fun restartSorting(){
+        shuffleList()
+        startStopSorting()
+    }
+
+    private fun shuffleList(list: List<ColumnSorting> = uiState.value.columns){
+        _uiState.update {
+            it.copy(
+                columns = list.shuffled()
+            )
+        }
+    }
+
+    private suspend fun bubbleSort() {
+        val arr = uiState.value.columns.toMutableList()
+        val n = arr.size
+
+        for (i in 0 until n - 1) {
+            for (j in 0 until n - i - 1) {
+                delay(1)
+                if (arr[j].n > arr[j + 1].n) {
+                    // Swap the elements
+                    val temp = arr[j]
+                    arr[j] = arr[j + 1]
+                    arr[j + 1] = temp
+                    _uiState.update { it.copy(columns = arr.toList()) }
+                }
+            }
+        }
         timerJob?.cancel()
-        _uiState.update { it.copy(isRunning = true) }
+        _uiState.update { it.copy(isRunning = false) }
+        _uiState.update { it.copy(isSorted = true) }
+    }
+
+    private fun startTimer() {
+        timerJob?.cancel()
+        _uiState.update { it.copy(isRunning = true, isSorted = false) }
 
         timerJob = viewModelScope.launch(Dispatchers.IO) {
             var timeSec = 0
             var timeMs = 0
 
             while (isActive) {
-                delay(50) // Atualiza a cada 200ms
-                timeMs += 50
+                delay(1) // Atualiza a cada 1ms
+                timeMs += 1
 
                 if (timeMs >= 1000) {
                     timeMs = 0
@@ -83,7 +117,7 @@ class MainViewModel: ViewModel() {
         }
     }
 
-    fun cancelTimer() {
+    private fun cancelTimer() {
         _uiState.update { it.copy(isRunning = false) }
         timerJob?.cancel()
         timerJob = null

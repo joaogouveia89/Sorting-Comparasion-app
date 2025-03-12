@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Scaffold
@@ -62,7 +64,7 @@ class MainActivity : ComponentActivity() {
                     }
 
 
-                    ScreenContent(innerPadding, boxesWidth, viewModel::startStopSorting, uiState)
+                    ScreenContent(innerPadding, boxesWidth, viewModel::startStopSorting, viewModel::restartSorting, uiState)
                 }
             }
         }
@@ -74,6 +76,7 @@ fun ScreenContent(
     innerPadding: PaddingValues,
     boxesWidth: Dp,
     startStopSorting: () -> Unit,
+    restartSorting: () -> Unit,
     uiState: SortingState
 ) {
     Column(
@@ -104,6 +107,15 @@ fun ScreenContent(
                 ) {
                     Text(text = if(uiState.isRunning) "Stop" else "Start" )
                 }
+
+                if(uiState.isSorted){
+                    Button(
+                        modifier = Modifier.padding(top = 12.dp),
+                        onClick = restartSorting
+                    ) {
+                        Text(text = "Restart")
+                    }
+                }
                 Row(
                     modifier = Modifier.padding(top = 12.dp)
                 ) {
@@ -124,7 +136,9 @@ fun ScreenContent(
             }
         }
         Row(
-            modifier = Modifier.weight(0.7f)
+            modifier = Modifier
+                .weight(0.7f)
+                .horizontalScroll(rememberScrollState())
         ) {
             Chart(
                 boxesWidth = boxesWidth,
@@ -180,6 +194,7 @@ fun ScreenContentPreview() {
             boxesWidth = boxesWidth, uiState = SortingState(),
             innerPadding = PaddingValues(),
             startStopSorting = {},
+            restartSorting = {},
         )
     }
 }
