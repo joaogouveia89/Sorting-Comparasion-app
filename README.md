@@ -17,7 +17,7 @@ An Android application that allows users to sort a shuffled list using three sor
 
 ## 📸 Screenshots
 
-<img alt="Screenshot" src="./screenshots/scs1.gif"/>
+![Screenshot](./screenshots/scs1.gif)
 
 
 ## 🚀 Future Improvements
