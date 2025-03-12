@@ -101,6 +101,8 @@ class MainViewModel: ViewModel() {
             _uiState.update {
                 it.copy(
                     algorithm = algorithm,
+                    timerSec = 0,
+                    timerMs = 0,
                     columns = shuffleList()
                 )
             }
