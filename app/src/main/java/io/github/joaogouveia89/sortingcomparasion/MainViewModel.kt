@@ -36,10 +36,10 @@ class MainViewModel: ViewModel() {
 
     private var timerJob: Job? = null
 
-    fun initList(colors: List<Color>, screenHeight: Dp){
+    fun initList(colors: List<Color>, screenHeight: Dp, listSize: Int){
 
         val columns = colors.mapIndexed { idx, color ->
-            val h = (screenHeight * 2 / 3) * idx / 80
+            val h = (screenHeight * 2 / 3) * idx / listSize
             ColumnSorting(
                 color,
                 idx,
@@ -63,7 +63,6 @@ class MainViewModel: ViewModel() {
 
     fun restartSorting(){
         shuffleList()
-        startStopSorting()
     }
 
     private fun shuffleList(list: List<ColumnSorting> = uiState.value.columns){
@@ -80,7 +79,6 @@ class MainViewModel: ViewModel() {
 
         for (i in 0 until n - 1) {
             for (j in 0 until n - i - 1) {
-                delay(1)
                 if (arr[j].n > arr[j + 1].n) {
                     // Swap the elements
                     val temp = arr[j]

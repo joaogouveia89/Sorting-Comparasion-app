@@ -60,7 +60,7 @@ class MainActivity : ComponentActivity() {
                     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
                     LaunchedEffect(Unit) {
-                        viewModel.initList(colorsChart, screenHeight)
+                        viewModel.initList(colorsChart, screenHeight, colorsChart.size)
                     }
 
 
@@ -113,7 +113,7 @@ fun ScreenContent(
                         modifier = Modifier.padding(top = 12.dp),
                         onClick = restartSorting
                     ) {
-                        Text(text = "Restart")
+                        Text(text = "Reshuffle")
                     }
                 }
                 Row(
