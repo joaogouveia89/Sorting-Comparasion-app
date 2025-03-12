@@ -10,6 +10,8 @@ val Purple40 = Color(0xFF6650a4)
 val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
+val GrayBg = Color(0xFFCFCDB7)
+
 
 val colorsChart = listOf(
     Color(0xFFC668F2),
