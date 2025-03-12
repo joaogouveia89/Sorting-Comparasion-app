@@ -23,6 +23,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -64,7 +65,7 @@ class MainActivity : ComponentActivity() {
                     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
                     LaunchedEffect(Unit) {
-                        viewModel.initList(colorsChart, screenHeight, colorsChart.size)
+                        viewModel.initList(colorsChart, screenHeight)
                     }
 
 
@@ -162,15 +163,27 @@ fun ScreenContent(
                 }
             }
         }
-        Row(
-            modifier = Modifier
-                .weight(0.7f)
-                .horizontalScroll(rememberScrollState())
-        ) {
-            Chart(
-                boxesWidth = boxesWidth,
-                columns = uiState.columns
-            )
+        if(uiState.isLoadingList){
+            Box(
+                modifier = Modifier
+                    .weight(0.7f)
+                    .fillMaxSize(),
+                contentAlignment = Alignment.Center
+
+            ) {
+                Text("Loading list")
+            }
+        }else{
+            Row(
+                modifier = Modifier
+                    .weight(0.7f)
+                    .horizontalScroll(rememberScrollState())
+            ) {
+                Chart(
+                    boxesWidth = boxesWidth,
+                    columns = uiState.columns
+                )
+            }
         }
     }
 }
