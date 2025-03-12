@@ -1,5 +1,7 @@
 package io.github.joaogouveia89.sortingcomparasion
 
+import android.app.ActivityManager
+import android.app.ActivityManager.MemoryInfo
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -43,12 +45,23 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.joaogouveia89.sortingcomparasion.ui.theme.GrayBg
 import io.github.joaogouveia89.sortingcomparasion.ui.theme.SortingComparasionTheme
 import io.github.joaogouveia89.sortingcomparasion.ui.theme.colorsChart
+import java.lang.Math.pow
+import java.math.RoundingMode
+import java.text.DecimalFormat
+import java.util.Locale
+import kotlin.math.pow
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val viewModel: MainViewModel by viewModels()
+
+        val memInfo = MemoryInfo()
+
+        val activityManager = getSystemService(ACTIVITY_SERVICE) as ActivityManager
+        activityManager.getMemoryInfo(memInfo);
+        val totalRam = memInfo.totalMem / 10.0.pow(9.0)
 
         setContent {
             SortingComparasionTheme {
@@ -74,7 +87,8 @@ class MainActivity : ComponentActivity() {
                         boxesWidth = boxesWidth,
                         startStopSorting = viewModel::startStopSorting,
                         uiState = uiState,
-                        onSortingAlgorithmChange = viewModel::changeSortAlgorithm
+                        onSortingAlgorithmChange = viewModel::changeSortAlgorithm,
+                        totalRam = totalRam
                     )
                 }
             }
@@ -88,7 +102,8 @@ fun ScreenContent(
     boxesWidth: Dp,
     startStopSorting: () -> Unit,
     onSortingAlgorithmChange: (SortingAlgorithm) -> Unit,
-    uiState: SortingState
+    uiState: SortingState,
+    totalRam: Double
 ) {
     Column(
         modifier = Modifier
@@ -106,9 +121,6 @@ fun ScreenContent(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "Algorithm"
-                )
                 Row(modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 12.dp, vertical = 8.dp),
@@ -160,6 +172,10 @@ fun ScreenContent(
                         text = "%02d".format(uiState.timerMs),
                         fontSize = timeSize
                     )
+                }
+
+                Row {
+                    Text("Total Ram: ${String.format(Locale.ROOT, "%.2f", totalRam)} GB")
                 }
             }
         }
@@ -261,6 +277,7 @@ fun ScreenContentPreview() {
             innerPadding = PaddingValues(),
             startStopSorting = {},
             onSortingAlgorithmChange = {},
+            totalRam = 4.0
         )
     }
 }
