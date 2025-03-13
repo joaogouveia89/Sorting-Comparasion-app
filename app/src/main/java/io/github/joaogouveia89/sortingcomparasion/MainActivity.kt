@@ -25,8 +25,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,12 +40,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.joaogouveia89.sortingcomparasion.model.ListElement
+import io.github.joaogouveia89.sortingcomparasion.state.SortingState
 import io.github.joaogouveia89.sortingcomparasion.ui.theme.GrayBg
 import io.github.joaogouveia89.sortingcomparasion.ui.theme.SortingComparasionTheme
 import io.github.joaogouveia89.sortingcomparasion.ui.theme.colorsChart
-import java.lang.Math.pow
-import java.math.RoundingMode
-import java.text.DecimalFormat
 import java.util.Locale
 import kotlin.math.pow
 
@@ -144,32 +141,25 @@ fun ScreenContent(
                 }
                 Button(
                     modifier = Modifier.padding(top = 8.dp),
+                    enabled = uiState.buttonState.isEnabled,
                     colors = ButtonDefaults.buttonColors().copy(
-                        containerColor = if(uiState.operationState == OperationState.SORTING) Color.Red else ButtonDefaults.buttonColors().containerColor
+                        containerColor = if(uiState.buttonState.isPrimaryColor) ButtonDefaults.buttonColors().containerColor else Color.Red
                     ),
                     onClick = startStopSorting
                 ) {
-                    Text(text = uiState.operationButtonLabel )
+                    Text(text = uiState.buttonState.label )
                 }
                 Row(
                     modifier = Modifier.padding(top = 8.dp)
                 ) {
                     val timeSize = 40.sp
                     Text(
-                        text = "%02d".format(uiState.timerSec),
-                        fontSize = timeSize
-                    )
-                    Text(
-                        text = ":",
-                        fontSize = timeSize
-                    )
-                    Text(
-                        text = "%02d".format(uiState.timerMs),
+                        text = uiState.computationTime,
                         fontSize = timeSize
                     )
                 }
 
-                uiState.runningTimes[uiState.algorithm]?.let {
+                uiState.lastRunningTime?.let {
                     Row(
                         modifier = Modifier.padding(top = 2.dp)
                     ) {
@@ -206,7 +196,7 @@ fun ScreenContent(
             ) {
                 Chart(
                     boxesWidth = boxesWidth,
-                    columns = uiState.columns
+                    columns = uiState.elements
                 )
             }
         }
@@ -217,7 +207,7 @@ fun ScreenContent(
 @Composable
 fun Chart(
     boxesWidth: Dp,
-    columns: List<ColumnSorting>
+    columns: List<ListElement>
 ) {
     Box(
         contentAlignment = Alignment.BottomStart

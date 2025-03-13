@@ -4,60 +4,42 @@ import androidx.lifecycle.ViewModel
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.viewModelScope
+import io.github.joaogouveia89.sortingcomparasion.algorithms.Sorting
+import io.github.joaogouveia89.sortingcomparasion.algorithms.SortingOperationStatus
+import io.github.joaogouveia89.sortingcomparasion.algorithms.implementations.BubbleSorting
+import io.github.joaogouveia89.sortingcomparasion.algorithms.implementations.QuickSorting
+import io.github.joaogouveia89.sortingcomparasion.model.ListElement
+import io.github.joaogouveia89.sortingcomparasion.state.ActionButtonInterrupt
+import io.github.joaogouveia89.sortingcomparasion.state.ActionButtonResort
+import io.github.joaogouveia89.sortingcomparasion.state.ActionButtonStart
+import io.github.joaogouveia89.sortingcomparasion.state.SortingState
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-data class ColumnSorting(
-    val color: Color,
-    val n: Int,
-    val height: Dp
-)
-
-enum class OperationState{
-    IDLE, SORTING, INTERRUPTED, FINISHED
-}
-data class SortingState(
-    val columns: List<ColumnSorting> = listOf(),
-    val timerSec: Int = 0,
-    val timerMs: Int = 0,
-    val operationState: OperationState = OperationState.IDLE,
-    val algorithm: SortingAlgorithm = SortingAlgorithm.BUBBLE_SORT,
-    val runningTimes: MutableMap<SortingAlgorithm, String> = mutableMapOf(),
-    val isLoadingList: Boolean = true
-){
-    val operationButtonLabel: String
-        get() = when(operationState){
-            OperationState.IDLE ->"Start"
-            OperationState.SORTING -> "Interrupt"
-            OperationState.INTERRUPTED -> "Reshuffle"
-            OperationState.FINISHED -> "Resort"
-        }
-}
-
-class MainViewModel: ViewModel() {
+class MainViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(SortingState())
 
     val uiState: StateFlow<SortingState>
         get() = _uiState
 
-    private var timerJob: Job? = null
+    private val algorithms: MutableMap<SortingAlgorithm, Sorting> = mutableMapOf()
 
-    fun initList(colors: List<Color>, screenHeight: Dp){
-        val list = viewModelScope.async(Dispatchers.IO)  {
+    val currentAlgorithm: Sorting?
+        get() = algorithms[uiState.value.algorithm]
+
+    fun initList(colors: List<Color>, screenHeight: Dp) {
+        val list = viewModelScope.async(Dispatchers.IO) {
             val listSize = colors.size
             val columns = colors.mapIndexed { idx, color ->
                 val h = (screenHeight * 2 / 3) * idx / listSize
-                ColumnSorting(
+                ListElement(
                     color,
                     idx,
                     h
@@ -67,171 +49,98 @@ class MainViewModel: ViewModel() {
         }
         viewModelScope.launch {
             _uiState.update {
+                val finalList = list.await()
+                initAlgorithms(finalList)
+                changeSortAlgorithm(SortingAlgorithm.BUBBLE_SORT)
                 it.copy(
-                    isLoadingList = false,
-                    columns = list.await()
+                    elements = finalList,
+                    buttonState = ActionButtonStart,
+                    isLoadingList = false
                 )
             }
         }
+    }
+
+    private fun initAlgorithms(list: List<ListElement>) {
+        algorithms.put(SortingAlgorithm.BUBBLE_SORT, BubbleSorting(list))
+        algorithms.put(SortingAlgorithm.QUICK_SORT, QuickSorting(list))
+        algorithms.put(SortingAlgorithm.MERGE_SORT, BubbleSorting(list))
     }
 
     fun startStopSorting() {
-        when(uiState.value.operationState){
-            OperationState.SORTING -> {
-                cancelTimer()
-                _uiState.update { it.copy(operationState = OperationState.INTERRUPTED) }
-            }
+        currentAlgorithm?.let {
+            if (it.isRunning) {
+                it.interrupt()
+            } else {
+                viewModelScope.launch(Dispatchers.IO) {
+                    _uiState.update {
+                        it.copy(buttonState = ActionButtonInterrupt)
+                    }
+                    it.sort().collect { status ->
+                        _uiState.update { state ->
+                            when (status) {
+                                is SortingOperationStatus.Idle -> {
+                                    state
+                                }
+                                is SortingOperationStatus.Finished -> state.copy(
+                                    elements = status.finalList,
+                                    computationTime = status.finalRuntime.toTimeFormat(),
+                                    buttonState = ActionButtonResort,
+                                    lastRunningTime = it.minRunningTime.toTimeFormat()
+                                )
 
-            OperationState.IDLE -> {
-                startTimer()
-                viewModelScope.launch(Dispatchers.IO) {
-                    startSorting()
-                }
-            }
-            else -> {
-                viewModelScope.launch(Dispatchers.IO) {
-                    uiState.value.runningTimes[uiState.value.algorithm] = "${uiState.value.timerSec}:${uiState.value.timerMs}"
-                    startTimer()
-                    startSorting()
+                                is SortingOperationStatus.Interrupted -> state.copy(
+                                    elements = status.partialList,
+                                    computationTime = status.currentRuntime.toTimeFormat(),
+                                    buttonState = ActionButtonResort,
+                                    lastRunningTime = it.minRunningTime.toTimeFormat()
+                                )
+
+                                is SortingOperationStatus.Progress -> state.copy(
+                                    elements = status.partialList,
+                                    computationTime = status.currentRuntime.toTimeFormat(),
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 
-    fun changeSortAlgorithm(algorithm: SortingAlgorithm){
-        if(uiState.value.operationState != OperationState.SORTING){
+    fun changeSortAlgorithm(algorithm: SortingAlgorithm) {
+        if (currentAlgorithm?.isRunning == false) {
             _uiState.update {
-                it.copy(
+                SortingState(
                     algorithm = algorithm,
-                    timerSec = 0,
-                    timerMs = 0,
-                    columns = shuffleList()
+                    isLoadingList = false,
+                    elements = currentAlgorithm?.initialList ?: listOf(),
+                    buttonState = ActionButtonStart,
+                    computationTime = "00:000"
                 )
             }
         }
     }
 
-    private fun shuffleList(list: List<ColumnSorting> = uiState.value.columns): List<ColumnSorting>{
-        return list.shuffled()
-    }
+    private fun shuffleList(list: List<ListElement> = uiState.value.elements): List<ListElement> =
+        list.shuffled()
 
-    private fun startSorting(){
-        if(_uiState.value.operationState == OperationState.FINISHED){
-                _uiState.update { it.copy(
-                    columns = shuffleList()
-                )
-            }
-        }
-        _uiState.update {
-            it.copy(
-                operationState = OperationState.SORTING
-            )
-        }
-        viewModelScope.launch(Dispatchers.IO) {
-            when(uiState.value.algorithm){
-                SortingAlgorithm.BUBBLE_SORT -> bubbleSort()
-                SortingAlgorithm.QUICK_SORT -> quickSort()
-                SortingAlgorithm.MERGE_SORT -> mergeSort()
-            }
-        }
-    }
-
-    private fun bubbleSort() {
-        val arr = uiState.value.columns.toMutableList()
-        val n = arr.size
-
-        for (i in 0 until n - 1) {
-            if(uiState.value.operationState == OperationState.INTERRUPTED) break
-            for (j in 0 until n - i - 1) {
-                if (arr[j].n > arr[j + 1].n) {
-                    if(uiState.value.operationState == OperationState.INTERRUPTED) break
-                    // Swap the elements
-                    val temp = arr[j]
-                    arr[j] = arr[j + 1]
-                    arr[j + 1] = temp
-                    _uiState.update { it.copy(columns = arr.toList()) }
-                }
-            }
-        }
-        timerJob?.cancel()
-        if(uiState.value.operationState != OperationState.INTERRUPTED){
-            _uiState.update {
-                if(!it.runningTimes.containsKey(SortingAlgorithm.BUBBLE_SORT)){
-                    it.runningTimes[SortingAlgorithm.BUBBLE_SORT] = "${it.timerSec}:${it.timerMs}"
-                }
-                it.copy(operationState = OperationState.FINISHED)
-            }
-        }
-    }
-
-    private fun quickSort(left: Int = 0, right: Int = uiState.value.columns.size - 1){
-        val arr = uiState.value.columns.toMutableList()
-        var start = left
-        var end = right
-        val pivot = arr[(left + right) / 2].n
-
-        while (start <= end) {
-            while (arr[start].n < pivot) {
-                start++
-            }
-            while (arr[end].n > pivot) {
-                end--
-            }
-            if (start <= end) {
-                val temp = arr[start]
-                arr[start] = arr[end]
-                arr[end] = temp
-                start++
-                end--
-                _uiState.update { it.copy(columns = arr.toList()) }
-            }
-        }
-
-        if (left < end) {
-            quickSort(left, end)
-        }
-        if (start < right) {
-            quickSort(start, right)
-        }
-
-        timerJob?.cancel()
-        if(uiState.value.operationState != OperationState.INTERRUPTED){
-            _uiState.update {
-                if(!it.runningTimes.containsKey(SortingAlgorithm.QUICK_SORT)){
-                    it.runningTimes[SortingAlgorithm.QUICK_SORT] = "${it.timerSec}:${it.timerMs}"
-                }
-                it.copy(
-                    operationState = OperationState.FINISHED,
-                )
-            }
-        }
-    }
-    private fun mergeSort(){
-        val arr = uiState.value.columns.toMutableList()
+    private fun mergeSort() {
+        val arr = uiState.value.elements.toMutableList()
         viewModelScope.launch(Dispatchers.IO) {
             val sorted = mergeSortIterative(arr)
 
-            _uiState.update { it.copy(columns = sorted) }
-
-            timerJob?.cancel()
-            if(uiState.value.operationState != OperationState.INTERRUPTED){
-                _uiState.update {
-                    if(!it.runningTimes.containsKey(SortingAlgorithm.MERGE_SORT)){
-                        it.runningTimes[SortingAlgorithm.MERGE_SORT] = "${it.timerSec}:${it.timerMs}"
-                    }
-                    it.copy(operationState = OperationState.FINISHED)
-                }
-            }
+            _uiState.update { it.copy(elements = sorted) }
         }
     }
 
-    private suspend fun mergeSortIterative(arr: List<ColumnSorting>): List<ColumnSorting> {
+    private suspend fun mergeSortIterative(arr: List<ListElement>): List<ListElement> {
         if (arr.size <= 1) return arr
 
         var current = arr.map { listOf(it) }
 
         while (current.size > 1) {
-            val next = mutableListOf<Deferred<List<ColumnSorting>>>()
+            val next = mutableListOf<Deferred<List<ListElement>>>()
 
             for (i in current.indices step 2) {
                 next.add(viewModelScope.async(Dispatchers.IO) {
@@ -243,16 +152,16 @@ class MainViewModel: ViewModel() {
             }
 
             current = next.awaitAll()
-            _uiState.update { it.copy(columns = current.flatten()) }
+            _uiState.update { it.copy(elements = current.flatten()) }
         }
 
         return current.first()
     }
 
-    private fun merge(left: List<ColumnSorting>, right: List<ColumnSorting>): List<ColumnSorting> {
+    private fun merge(left: List<ListElement>, right: List<ListElement>): List<ListElement> {
         var i = 0
         var j = 0
-        val merged = mutableListOf<ColumnSorting>()
+        val merged = mutableListOf<ListElement>()
 
         while (i < left.size && j < right.size) {
             if (left[i].n <= right[j].n) {
@@ -268,36 +177,14 @@ class MainViewModel: ViewModel() {
         return merged
     }
 
-    private fun startTimer() {
-        timerJob?.cancel()
-
-        timerJob = viewModelScope.launch(Dispatchers.IO) {
-            var timeSec = 0
-            var timeMs = 0
-
-            while (isActive) {
-                delay(1)
-                timeMs += 1
-
-                if (timeMs >= 1000) {
-                    timeMs = 0
-                    timeSec++
-                }
-
-                _uiState.value = _uiState.value.copy(timerSec = timeSec, timerMs = timeMs)
-            }
-        }
-    }
-
-    private fun cancelTimer() {
-        _uiState.update { it.copy(operationState = OperationState.INTERRUPTED) }
-        timerJob?.cancel()
-        timerJob = null
-    }
-
     override fun onCleared() {
         super.onCleared()
-        _uiState.update { it.copy(operationState = OperationState.INTERRUPTED) }
-        timerJob?.cancel()
+        currentAlgorithm?.interrupt()
+    }
+
+    fun Long.toTimeFormat(): String {
+        val seconds = this / 1000
+        val millis = this % 1000
+        return "%02d:%03d".format(seconds, millis)
     }
 }
