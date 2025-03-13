@@ -168,7 +168,7 @@ fun ScreenContent(
                                 .padding(start = 4.dp)
                                 .align(Alignment.Bottom),
                             fontSize = 12.sp,
-                            text = "Last time was: $it"
+                            text = "The record is : $it"
                         )
                     }
                 }

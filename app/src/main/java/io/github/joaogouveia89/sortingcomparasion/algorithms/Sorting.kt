@@ -12,7 +12,7 @@ abstract class Sorting(
     val minRunningTime: Long
         get() = _minRunningTime
 
-    protected var _minRunningTime = -1L
+    protected var _minRunningTime = Long.MAX_VALUE
 
     abstract suspend fun sort(): Flow<SortingOperationStatus>
 
