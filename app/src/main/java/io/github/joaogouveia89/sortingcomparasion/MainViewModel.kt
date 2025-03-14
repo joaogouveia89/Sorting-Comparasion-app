@@ -45,7 +45,7 @@ class MainViewModel : ViewModel() {
                     h
                 )
             }
-            shuffleList(columns)
+            columns.shuffled()
         }
         viewModelScope.launch {
             _uiState.update {
@@ -64,7 +64,6 @@ class MainViewModel : ViewModel() {
     private fun initAlgorithms(list: List<ListElement>) {
         algorithms.put(SortingAlgorithm.BUBBLE_SORT, BubbleSorting(list))
         algorithms.put(SortingAlgorithm.QUICK_SORT, QuickSorting(list))
-        algorithms.put(SortingAlgorithm.MERGE_SORT, BubbleSorting(list))
     }
 
     fun startStopSorting() {
@@ -120,61 +119,6 @@ class MainViewModel : ViewModel() {
                 )
             }
         }
-    }
-
-    private fun shuffleList(list: List<ListElement> = uiState.value.elements): List<ListElement> =
-        list.shuffled()
-
-    private fun mergeSort() {
-        val arr = uiState.value.elements.toMutableList()
-        viewModelScope.launch(Dispatchers.IO) {
-            val sorted = mergeSortIterative(arr)
-
-            _uiState.update { it.copy(elements = sorted) }
-        }
-    }
-
-    private suspend fun mergeSortIterative(arr: List<ListElement>): List<ListElement> {
-        if (arr.size <= 1) return arr
-
-        var current = arr.map { listOf(it) }
-
-        while (current.size > 1) {
-            val next = mutableListOf<Deferred<List<ListElement>>>()
-
-            for (i in current.indices step 2) {
-                next.add(viewModelScope.async(Dispatchers.IO) {
-                    if (i + 1 < current.size)
-                        merge(current[i], current[i + 1])
-                    else
-                        current[i]
-                })
-            }
-
-            current = next.awaitAll()
-            _uiState.update { it.copy(elements = current.flatten()) }
-        }
-
-        return current.first()
-    }
-
-    private fun merge(left: List<ListElement>, right: List<ListElement>): List<ListElement> {
-        var i = 0
-        var j = 0
-        val merged = mutableListOf<ListElement>()
-
-        while (i < left.size && j < right.size) {
-            if (left[i].n <= right[j].n) {
-                merged.add(left[i++])
-            } else {
-                merged.add(right[j++])
-            }
-        }
-
-        while (i < left.size) merged.add(left[i++])
-        while (j < right.size) merged.add(right[j++])
-
-        return merged
     }
 
     override fun onCleared() {
