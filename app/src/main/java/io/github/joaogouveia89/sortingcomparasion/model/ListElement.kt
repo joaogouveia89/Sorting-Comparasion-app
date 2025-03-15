@@ -6,5 +6,5 @@ import androidx.compose.ui.unit.Dp
 data class ListElement(
     val color: Color,
     val n: Int,
-    val height: Dp
+    val height: Float
 )

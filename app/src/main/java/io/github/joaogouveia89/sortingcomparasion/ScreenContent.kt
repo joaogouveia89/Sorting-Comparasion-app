@@ -22,12 +22,12 @@ import io.github.joaogouveia89.sortingcomparasion.state.SortingState
 @Composable
 fun ScreenContent(
     innerPadding: PaddingValues,
-    boxesWidth: Dp,
+    boxesWidth: Float,
     startStopSorting: () -> Unit,
     onSortingAlgorithmChange: (SortingAlgorithm) -> Unit,
     uiState: SortingState,
     totalRam: Double,
-    screenHeight: Dp,
+    bargraphHeightInPx: Float,
     bargraphHeight: Dp,
 ) {
     Column(
@@ -64,8 +64,9 @@ fun ScreenContent(
                 Bargraph(
                     boxesWidth = boxesWidth,
                     columns = uiState.elements,
-                    chartHeight = bargraphHeight,
-                    screenHeight = screenHeight
+                    bargraphHeight = bargraphHeight,
+                    bargraphHeightInPx = bargraphHeightInPx,
+                    boxWidth = boxesWidth
                 )
             }
         }

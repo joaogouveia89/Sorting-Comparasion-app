@@ -1,5 +1,6 @@
 package io.github.joaogouveia89.sortingcomparasion.components
 
+import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
@@ -12,22 +13,24 @@ import io.github.joaogouveia89.sortingcomparasion.model.ListElement
 
 @Composable
 fun Bargraph(
-    boxesWidth: Dp,
-    chartHeight: Dp,
-    screenHeight: Dp,
-    columns: List<ListElement>
+    boxesWidth: Float,
+    bargraphHeight: Dp,
+    bargraphHeightInPx: Float,
+    columns: List<ListElement>,
+    boxWidth: Float
 ) {
-    val canvaSize = (columns.size * (boxesWidth.value + 2))
+    val canvaSize = (columns.size * boxesWidth)
 
     Canvas(modifier = Modifier
-        .size(canvaSize.dp, chartHeight)
+        .size(canvaSize.dp, bargraphHeight)
     ) {
         columns.forEachIndexed { idx, it ->
-            val offset = screenHeight - it.height
+            val h = (bargraphHeightInPx - it.height)
+            val w = (idx * (boxWidth + 2))
             drawRect(
                 color = it.color,
-                size = Size(boxesWidth.value, it.height.value * 2),
-                topLeft = Offset(((idx * (boxesWidth.value + 2))), offset.value)
+                size = Size(boxesWidth, it.height),
+                topLeft = Offset(w, h)
             )
         }
     }

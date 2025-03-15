@@ -13,6 +13,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.joaogouveia89.sortingcomparasion.ui.theme.SortingComparasionTheme
@@ -23,7 +24,6 @@ class MainActivity : ComponentActivity() {
 
     private var screenWidth = 0.dp
     private var screenHeight = 0.dp
-    private var bargraphtHeight = 0.dp
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,19 +41,21 @@ class MainActivity : ComponentActivity() {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
 
                     val configuration = LocalConfiguration.current
-
+                    val density = LocalDensity.current
                     screenHeight = configuration.screenHeightDp.dp
                     screenWidth = configuration.screenWidthDp.dp
-                    bargraphtHeight = screenHeight * 7/10
 
-                    val boxesWidth = screenWidth / 30
+                    val boxesWidth = with(density) { screenWidth.toPx() / 30.0 }.toFloat()
+                    val screenHeightInPx = with(density) { screenHeight.toPx() }
+
+                    val bargraphtHeight = screenHeight * 7/10
+                    val bargraphtHeightInPx = screenHeightInPx * 7/10
 
                     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
                     LaunchedEffect(Unit) {
-                        viewModel.initList(colorsChart, screenHeight)
+                        viewModel.initList(colorsChart, bargraphtHeightInPx)
                     }
-
 
                     ScreenContent(
                         innerPadding = innerPadding,
@@ -63,7 +65,7 @@ class MainActivity : ComponentActivity() {
                         onSortingAlgorithmChange = viewModel::changeSortAlgorithm,
                         totalRam = totalRam,
                         bargraphHeight = bargraphtHeight,
-                        screenHeight = screenHeight
+                        bargraphHeightInPx = bargraphtHeightInPx
                     )
                 }
             }
