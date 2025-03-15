@@ -10,19 +10,19 @@ An Android application that allows users to sort a shuffled list with 3000 items
 
 ## 🎮 Features
 
-- Users can choose one of the two available sorting algorithms.
+- Users can choose one of the three available sorting algorithms.
 - The app generates a random list and sorts it.
 - Displays the execution time for each sorting algorithm.
 - Modern and responsive UI using Jetpack Compose.
 
 ## 📸 Screenshots
 
-![Screenshot1](./screenshots/screenshot1.png) ![Screenshot2](./screenshots/screenshot2.png)
+![Screenshot](./screenshots/scs1.gif)
 
 
 ## 🚀 Future Improvements
 
-- [x] Remove the sorting logic from view model, create a scalable solution
+- [ ] Remove the sorting logic from view model, create a scalable solution
 
 ## 📂 How to Run
 
