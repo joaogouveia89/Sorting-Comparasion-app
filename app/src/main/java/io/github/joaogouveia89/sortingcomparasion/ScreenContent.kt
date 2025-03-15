@@ -28,6 +28,7 @@ fun ScreenContent(
     uiState: SortingState,
     totalRam: Double,
     bargraphHeightInPx: Float,
+    bargraphtWidth: Dp,
     bargraphHeight: Dp,
 ) {
     Column(
@@ -66,7 +67,8 @@ fun ScreenContent(
                     columns = uiState.elements,
                     bargraphHeight = bargraphHeight,
                     bargraphHeightInPx = bargraphHeightInPx,
-                    boxWidth = boxesWidth
+                    boxWidth = boxesWidth,
+                    bargraphtWidth = bargraphtWidth
                 )
             }
         }

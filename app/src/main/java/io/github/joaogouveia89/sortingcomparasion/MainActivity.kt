@@ -3,6 +3,7 @@ package io.github.joaogouveia89.sortingcomparasion
 import android.app.ActivityManager
 import android.app.ActivityManager.MemoryInfo
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -24,6 +25,8 @@ class MainActivity : ComponentActivity() {
 
     private var screenWidth = 0.dp
     private var screenHeight = 0.dp
+
+    private val colorsChartSize = colorsChart.size
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,6 +53,7 @@ class MainActivity : ComponentActivity() {
 
                     val bargraphtHeight = screenHeight * 7/10
                     val bargraphtHeightInPx = screenHeightInPx * 7/10
+                    val bargraphtWidth = with(density) { (colorsChartSize * (boxesWidth + 2)).toDp() }
 
                     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -65,7 +69,8 @@ class MainActivity : ComponentActivity() {
                         onSortingAlgorithmChange = viewModel::changeSortAlgorithm,
                         totalRam = totalRam,
                         bargraphHeight = bargraphtHeight,
-                        bargraphHeightInPx = bargraphtHeightInPx
+                        bargraphHeightInPx = bargraphtHeightInPx,
+                        bargraphtWidth = bargraphtWidth
                     )
                 }
             }
