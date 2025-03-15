@@ -5,7 +5,6 @@ import io.github.joaogouveia89.sortingcomparasion.algorithms.SortingOperationSta
 import io.github.joaogouveia89.sortingcomparasion.model.ListElement
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlin.math.min
 
 class BubbleSorting(
     override val initialList: List<ListElement>

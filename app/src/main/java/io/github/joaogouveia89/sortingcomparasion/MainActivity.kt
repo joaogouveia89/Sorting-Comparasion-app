@@ -3,7 +3,6 @@ package io.github.joaogouveia89.sortingcomparasion
 import android.app.ActivityManager
 import android.app.ActivityManager.MemoryInfo
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -23,21 +22,11 @@ import kotlin.math.pow
 
 class MainActivity : ComponentActivity() {
 
-    private var screenWidth = 0.dp
-    private var screenHeight = 0.dp
-
-    private val colorsChartSize = colorsChart.size
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val viewModel: MainViewModel by viewModels()
-
-        val memInfo = MemoryInfo()
-
-        val activityManager = getSystemService(ACTIVITY_SERVICE) as ActivityManager
-        activityManager.getMemoryInfo(memInfo)
-        val totalRam = memInfo.totalMem / 10.0.pow(9.0)
+        val totalRam = getTotalRam()
 
         setContent {
             SortingComparasionTheme {
@@ -45,20 +34,20 @@ class MainActivity : ComponentActivity() {
 
                     val configuration = LocalConfiguration.current
                     val density = LocalDensity.current
-                    screenHeight = configuration.screenHeightDp.dp
-                    screenWidth = configuration.screenWidthDp.dp
 
-                    val boxesWidth = with(density) { screenWidth.toPx() / 30.0 }.toFloat()
+                    val screenHeight = configuration.screenHeightDp.dp
+                    val screenWidth = configuration.screenWidthDp.dp
                     val screenHeightInPx = with(density) { screenHeight.toPx() }
+                    val boxesWidth = with(density) { screenWidth.toPx() / 30.0 }.toFloat()
 
-                    val bargraphtHeight = screenHeight * 7/10
-                    val bargraphtHeightInPx = screenHeightInPx * 7/10
-                    val bargraphtWidth = with(density) { (colorsChartSize * (boxesWidth + 2)).toDp() }
+                    val bargraphHeight = screenHeight * 7 / 10
+                    val bargraphHeightInPx = screenHeightInPx * 7 / 10
+                    val bargraphWidth = with(density) { (colorsChart.size * (boxesWidth + 2)).toDp() }
 
                     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
                     LaunchedEffect(Unit) {
-                        viewModel.initList(colorsChart, bargraphtHeightInPx)
+                        viewModel.initList(colorsChart, bargraphHeightInPx)
                     }
 
                     ScreenContent(
@@ -68,12 +57,19 @@ class MainActivity : ComponentActivity() {
                         uiState = uiState,
                         onSortingAlgorithmChange = viewModel::changeSortAlgorithm,
                         totalRam = totalRam,
-                        bargraphHeight = bargraphtHeight,
-                        bargraphHeightInPx = bargraphtHeightInPx,
-                        bargraphtWidth = bargraphtWidth
+                        bargraphHeight = bargraphHeight,
+                        bargraphHeightInPx = bargraphHeightInPx,
+                        bargraphtWidth = bargraphWidth
                     )
                 }
             }
         }
+    }
+
+    private fun getTotalRam(): Double {
+        val memInfo = MemoryInfo()
+        val activityManager = getSystemService(ACTIVITY_SERVICE) as ActivityManager
+        activityManager.getMemoryInfo(memInfo)
+        return memInfo.totalMem / 10.0.pow(9.0)
     }
 }
