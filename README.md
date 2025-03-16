@@ -1,6 +1,6 @@
 # Sorting App 📱🚀
 
-An Android application that allows users to sort a shuffled list with 3000 items using three sorting algorithms: **Bubble Sort** and **Quick Sort**. The app measures the execution time of each sorting method and displays the result on the UI.
+An Android application that allows users to sort a shuffled list with 3000 items using two sorting algorithms: **Bubble Sort** and **Quick Sort**. The app measures the execution time of each sorting method and displays the result on the UI.
 
 ## 📌 Technologies Used
 
@@ -10,19 +10,19 @@ An Android application that allows users to sort a shuffled list with 3000 items
 
 ## 🎮 Features
 
-- Users can choose one of the three available sorting algorithms.
+- Users can choose one of the two available sorting algorithms.
 - The app generates a random list and sorts it.
 - Displays the execution time for each sorting algorithm.
 - Modern and responsive UI using Jetpack Compose.
 
 ## 📸 Screenshots
 
-![Screenshot](./screenshots/scs1.gif)
+![Screenshot1](./screenshots/screenshot1.png) ![Screenshot2](./screenshots/screenshot2.png)
 
 
 ## 🚀 Future Improvements
 
-- [ ] Remove the sorting logic from view model, create a scalable solution
+- [x] Remove the sorting logic from view model, create a scalable solution
 
 ## 📂 How to Run
 
